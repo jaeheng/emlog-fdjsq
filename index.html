@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>房贷计算器-2020</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- 引入vue.js -->
+    <script src="lib/vue.js"></script>
+    <!-- 引入组件库 -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body onhashchange="vm.hashChange()">
+
+<div id="app">
+    <ul>
+        <li><a href="#cal1">cal1</a></li>
+        <li><a href="#cal2">cal2</a></li>
+        <li><a href="#cal3">cal3</a></li>
+        <li><a href="#cal4">cal4</a></li>
+        <li><a href="#cal5">cal5</a></li>
+    </ul>
+
+    <div v-if="hash === '#cal1'">
+        <el-form :model="form" label-position="left" label-width="120px">
+            <el-form-item label="贷款类别:">
+                <el-select v-model="form.type">
+                    <el-option label="商业贷款" :value="1"></el-option>
+                    <el-option label="公积金贷款" :value="2"></el-option>
+                    <el-option label="组合贷款" :value="3"></el-option>
+                </el-select>
+            </el-form-item>
+            <!-- 计算方式 -->
+            <el-form-item label="计算方式:">
+                <el-select v-model="form.calcType">
+                    <el-option label="根据面积、单价计算" :value="1"></el-option>
+                    <el-option label="根据贷款总额计算" :value="2"></el-option>
+                </el-select>
+            </el-form-item>
+
+            <!--房屋单价: calcType=1-->
+            <el-form-item label="房屋单价:" v-if="form.calcType===1">
+                <el-input placeholder="请输入房屋单价" v-model="form.unitPrice" type="number" class="transparent-append">
+                    <span slot="append">元/平米</span>
+                </el-input>
+            </el-form-item>
+
+            <!--房屋面积: calcType=1-->
+            <el-form-item label="房屋面积:" v-if="form.calcType===1">
+                <el-input placeholder="请输入房屋面积" v-model="form.area" type="number" class="transparent-append">
+                    <span slot="append">平米</span>
+                </el-input>
+            </el-form-item>
+
+            <!--按揭成数: 2-9-->
+            <el-form-item label="按揭成数:">
+                <el-select v-model="form.loanPercentage">
+                    <el-option :label="(9.5 - item * 0.5) + '成'" :value="9.5 - item * 0.5" v-for="item in 15"></el-option>
+                </el-select>
+            </el-form-item>
+
+            <!--按揭年数: 1-30年-->
+            <el-form-item label="按揭年数:">
+                <el-select v-model="form.loanYear">
+                    <el-option :label="(31 - item) + '年'" :value="(31 - item)" v-for="item in 30"></el-option>
+                </el-select>
+            </el-form-item>
+
+            <!--贷款利率: 15年10月24日基准利率（基准利率）-->
+            <el-form-item label="贷款利率:">
+                <el-col :span="18">
+                    <el-select v-model="form.discount" @change="discountChange" style="width: 100%">
+                        <el-option :label="'15年10月24日基准利率（' + rateFmt(item).label + '）'" :value="rateFmt(item).value" v-for="item in 13">
+                            <span style="float: left">{{ rateFmt(item).label }}</span>
+                        </el-option>
+                    </el-select>
+                </el-col>
+                <el-col :span="1" style="text-align: center"> - </el-col>
+                <el-col :span="5">
+                    <el-input placeholder="请输入贷款利率" v-model="form.rate" type="number" class="transparent-append">
+                        <span slot="append">%</span>
+                    </el-input>
+                </el-col>
+            </el-form-item>
+        </el-form>
+    </div>
+
+    {{ form }}
+</div>
+
+<script>
+var vm = new Vue({
+    el: '#app',
+    data: {
+        hash: window.location.hash,
+        baseRate: 4.9,
+        form: {
+            type: 1, // 贷款类别 1 商业贷款 2 公积金贷款 3 组合贷款
+            calcType: 1, // 计算方式 1根据面积、单价计算 2根据贷款总额计算
+            unitPrice: '', // 房屋单价/元
+            area: '', // 房屋面积/平米
+            loanPercentage: 7, // 按揭成数
+            loanYear: 30, // 按揭年数
+            discount: 1, // 贷款折扣
+            rate: this.baseRate
+        }
+    },
+    methods: {
+        hashChange: function () {
+            this.hash = window.location.hash
+        },
+        rateFmt: function (item) {
+            var value = (6.5 + item * 0.5) / 10
+            var label = ''
+            if (value === 1) {
+                label = '基准利率'
+            } else if (value > 1) {
+                label = value + '倍'
+            } else {
+                label = (value * 10) + '折'
+            }
+            return {
+                label: label,
+                value: value
+            }
+        },
+        discountChange: function () {
+            var discount = this.form.discount
+            this.form.rate = (this.baseRate * discount).toFixed(2)
+        }
+    },
+    mounted: function () {
+        this.discountChange()
+    }
+})
+</script>
+</body>
+</html>
